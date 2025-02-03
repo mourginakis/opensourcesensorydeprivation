@@ -129,17 +129,25 @@ void handleHttpResponse(WiFiClient& client, String& request) {
     if (ledOn) digitalWrite(LED_BUILTIN, HIGH);
     if (ledOff) digitalWrite(LED_BUILTIN, LOW);
 
-    // // Check for /setTemp endpoint
-    // int tempIndex = request.indexOf("GET /setTemp?value=");
-    // if (tempIndex >= 0) {
-    //     int valueStart = tempIndex + 18; // Length of "GET /setTemp?value="
-    //     int valueEnd = request.indexOf(' ', valueStart);
-    //     if (valueEnd > valueStart) {
-    //         String valueStr = request.substring(valueStart, valueEnd);
-    //         tempTarget = valueStr.toFloat();
-    //         Serial.println("New tempTarget: " + String(tempTarget));
-    //     }
-    // }
+    // Check for /setTemp endpoint
+    int tempIndex = request.indexOf("GET /setTemp?value=");
+    if (tempIndex >= 0) {
+        int valueStart = tempIndex + 19; // Correct length of "GET /setTemp?value="
+        int valueEnd = request.indexOf(' ', valueStart);
+        if (valueEnd == -1) {
+            valueEnd = request.indexOf('\r', valueStart); // Look for end of line if no space
+        }
+        if (valueEnd > valueStart) {
+            String valueStr = request.substring(valueStart, valueEnd);
+            Serial.println("Extracted valueStr: " + valueStr); // Debug print
+            targetTemperatureF = valueStr.toFloat();
+            Serial.println("New targetTemperatureF: " + String(targetTemperatureF));
+        } else {
+            Serial.println("Failed to find valueEnd");
+        }
+    } else {
+        Serial.println("Failed to find /setTemp endpoint");
+    }
 
     String htmlResponse =
         "HTTP/1.1 200 OK\r\n"
