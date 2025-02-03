@@ -95,7 +95,7 @@ void loop() {
 
   Serial.println("Client Request:\n" + request);
 
-  sendHttpResponse(client, request);
+  handleHttpResponse(client, request);
 
   client.stop();
   Serial.println("Client disconnected.");
@@ -119,7 +119,7 @@ String readHttpRequest(WiFiClient& client) {
 }
 
 
-void sendHttpResponse(WiFiClient& client, String& request) {
+void handleHttpResponse(WiFiClient& client, String& request) {
     bool ledOn = request.indexOf("GET /H") >= 0;
     bool ledOff = request.indexOf("GET /L") >= 0;
 
