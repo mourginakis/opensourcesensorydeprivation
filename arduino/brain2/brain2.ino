@@ -12,9 +12,9 @@ to the board. The IDE will live update the file.
 #include <DallasTemperature.h>
 #include <CircularBuffer.hpp>
 #include "WiFiS3.h"
+#include "Arduino_LED_Matrix.h"   // Include the LED_Matrix library
 
 #include "arduino_secrets.h"
-
 
 char ssid[] = SECRET_SSID;        // network SSID
 char pass[] = SECRET_PASS;        // network password
@@ -24,7 +24,6 @@ int status = WL_IDLE_STATUS;
 WiFiServer server(80);
 
 
-
 // Data wire of DS18B20 Temperature Sensor (digital pin 2)
 #define ONE_WIRE_BUS 2
 
@@ -32,6 +31,8 @@ WiFiServer server(80);
 OneWire oneWire(ONE_WIRE_BUS);
 // Pass the reference to Dallas Temperature.
 DallasTemperature sensors(&oneWire);
+
+ArduinoLEDMatrix matrix;
 
 // We use circular buffers to keep track of data moving averages.
 CircularBuffer <float, 10> temperatureBufferF;             // Water Temperature
@@ -47,6 +48,7 @@ void setup() {
   Serial.begin(9600);
   sensors.begin();          // Start the DS18B20 sensor
   Serial.println("DS18B20 Temperature Sensor Ready");
+  matrix.begin(); 
 
   // check for the WiFi module:
   if (WiFi.status() == WL_NO_MODULE) {
@@ -77,6 +79,7 @@ void setup() {
 
 
 void loop() {
+  matrix.loadFrame(LEDMATRIX_HEART_SMALL);
   unsigned long currentMillis = millis();
   
   // Check temperature every 10 seconds
