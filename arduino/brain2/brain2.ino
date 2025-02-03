@@ -10,6 +10,7 @@ to the board. The IDE will live update the file.
 */
 #include <OneWire.h>
 #include <DallasTemperature.h>
+#include <CircularBuffer.hpp>
 #include "WiFiS3.h"
 
 #include "arduino_secrets.h"
@@ -32,9 +33,13 @@ OneWire oneWire(ONE_WIRE_BUS);
 // Pass the reference to Dallas Temperature.
 DallasTemperature sensors(&oneWire);
 
+// We use circular buffers to keep track of data moving averages.
+CircularBuffer <float, 10> temperatureBufferF;             // Water Temperature
+// CircularBuffer <float, 10> humidityBuffer;              // Humidity
+
+
 unsigned long lastTempCheck = 0;  // Store the last time temperature was checked
 const unsigned long tempCheckInterval = 10000;  // Interval to check temperature (10 seconds)
-float currentTemperatureF = 0.0;
 float targetTemperatureF = 93.5;
 
 
@@ -78,8 +83,11 @@ void loop() {
   if (currentMillis - lastTempCheck >= tempCheckInterval) {
     lastTempCheck = currentMillis;
     sensors.requestTemperatures(); // Request temperature measurement
-    currentTemperatureF = sensors.getTempFByIndex(0);
-    Serial.println("Temperature: " + String(currentTemperatureF) + "°F  ->  Target: " + String(targetTemperatureF) + "°F");
+    float currentTemperatureF = sensors.getTempFByIndex(0);
+    temperatureBufferF.push(currentTemperatureF);
+    float myAverage = averageValue(temperatureBufferF);
+    Serial.println("Temperature: " + String(myAverage) + "°F  ->  Target: " + String(targetTemperatureF) + "°F");
+    Serial.println("Buffer Size: " + String(temperatureBufferF.size()));
   }
 
   // Allow a client to connect
@@ -172,7 +180,7 @@ void handleHttpResponse(WiFiClient& client, String& request) {
         "    <a href=\"/H\">Turn LED ON</a>\n"
         "    <a href=\"/L\">Turn LED OFF</a>\n"
         "    <p>Current->Target</p>\n"
-        "    <p>" + String(currentTemperatureF) + "°F --> " + String(targetTemperatureF) + "°F</p>\n"
+        "    <p>" + String(averageValue(temperatureBufferF)) + "°F --> " + String(targetTemperatureF) + "°F</p>\n"
         "    <p>Last Temp Check: " + String(lastTempCheck) + "</p>\n"
         "    <form action=\"/setTemp\" method=\"get\">\n"
         "        <label for=\"value\">Set Temp Target:</label>\n"
@@ -199,4 +207,12 @@ void printWifiStatus() {
   Serial.print("signal strength (RSSI):");
   Serial.print(rssi);
   Serial.println(" dBm");
+}
+
+
+float averageValue(CircularBuffer<float, 10>& buffer) {
+  if (buffer.size() == 0) return 0.0; // avoid division by zero
+  float sum = 0.0;
+  for (int i = 0; i < buffer.size(); i++) { sum += buffer[i]; }
+  return sum / buffer.size();
 }
