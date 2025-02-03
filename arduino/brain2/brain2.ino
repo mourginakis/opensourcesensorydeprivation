@@ -32,8 +32,8 @@ OneWire oneWire(ONE_WIRE_BUS);
 // Pass the reference to Dallas Temperature.
 DallasTemperature sensors(&oneWire);
 
-
-
+unsigned long lastTempCheck = 0;  // Store the last time temperature was checked
+const unsigned long tempCheckInterval = 10000;  // Interval to check temperature (10 seconds)
 
 void setup() {
   Serial.begin(9600);
@@ -69,10 +69,15 @@ void setup() {
 
 
 void loop() {
-
-  sensors.requestTemperatures(); // Request temperature measurement
-  float temperatureF = sensors.getTempFByIndex(0);
-  Serial.println("Temperature: " + String(temperatureF) + "°F");
+  unsigned long currentMillis = millis();
+  
+  // Check temperature every 10 seconds
+  if (currentMillis - lastTempCheck >= tempCheckInterval) {
+    lastTempCheck = currentMillis;
+    sensors.requestTemperatures(); // Request temperature measurement
+    float temperatureF = sensors.getTempFByIndex(0);
+    Serial.println("Temperature: " + String(temperatureF) + "°F");
+  }
 
   // Allow a client to connect
   WiFiClient client = server.available();
