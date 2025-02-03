@@ -84,7 +84,7 @@ void loop() {
   Serial.println("Client Request:\n" + request);
 
 
-  handleRequest(client, request);
+  sendHttpResponse(client, request);
 
   client.stop();
   Serial.println("Client disconnected.");
@@ -108,24 +108,37 @@ String readHttpRequest(WiFiClient& client) {
 }
 
 
-// Processes HTTP requests
-void handleRequest(WiFiClient& client, String& request) {
-    String response = "HTTP/1.1 200 OK\r\nContent-type:text/html\r\n\r\n";
+void sendHttpResponse(WiFiClient& client, String& request) {
+    bool ledOn = request.indexOf("GET /H") >= 0;
+    bool ledOff = request.indexOf("GET /L") >= 0;
 
-    if (request.indexOf("GET /H") >= 0) {
-        digitalWrite(LED_BUILTIN, HIGH);
-        response += "<p style=\"font-size:7vw;\">LED is <b>ON</b></p>";
-    } else if (request.indexOf("GET /L") >= 0) {
-        digitalWrite(LED_BUILTIN, LOW);
-        response += "<p style=\"font-size:7vw;\">LED is <b>OFF</b></p>";
-    } else {
-        response += "<p style=\"font-size:7vw;\">Invalid Request</p>";
-    }
+    if (ledOn) digitalWrite(LED_BUILTIN, HIGH);
+    if (ledOff) digitalWrite(LED_BUILTIN, LOW);
 
-    response += "<p style=\"font-size:7vw;\"><a href=\"/H\">Turn LED ON</a></p>";
-    response += "<p style=\"font-size:7vw;\"><a href=\"/L\">Turn LED OFF</a></p>";
+    String htmlResponse =
+        "HTTP/1.1 200 OK\r\n"
+        "Content-type: text/html\r\n"
+        "\r\n"
+        "<!DOCTYPE html>\n"
+        "<html lang=\"en\">\n"
+        "<head>\n"
+        "    <meta charset=\"UTF-8\">\n"
+        "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
+        "    <title>ESP Web Server</title>\n"
+        "    <style>\n"
+        "        body { font-size: 3vw; text-align: center; font-family: Arial, sans-serif; }\n"
+        "        a { display: block; padding: 20px; margin: 10px; background: #007BFF; color: white; text-decoration: none; border-radius: 10px; }\n"
+        "    </style>\n"
+        "</head>\n"
+        "<body>\n"
+        "    <h1>ESP Web Server</h1>\n"
+        "    <p>LED is " + String(ledOn ? "ON" : "OFF") + "</p>\n"
+        "    <a href=\"/H\">Turn LED ON</a>\n"
+        "    <a href=\"/L\">Turn LED OFF</a>\n"
+        "</body>\n"
+        "</html>\n";
 
-    client.print(response);
+    client.print(htmlResponse);
 }
 
 
