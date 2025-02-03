@@ -34,7 +34,8 @@ DallasTemperature sensors(&oneWire);
 
 unsigned long lastTempCheck = 0;  // Store the last time temperature was checked
 const unsigned long tempCheckInterval = 10000;  // Interval to check temperature (10 seconds)
-float tempTarget = 93.5;
+float currentTemperatureF = 0.0;
+float targetTemperatureF = 93.5;
 
 
 void setup() {
@@ -77,8 +78,8 @@ void loop() {
   if (currentMillis - lastTempCheck >= tempCheckInterval) {
     lastTempCheck = currentMillis;
     sensors.requestTemperatures(); // Request temperature measurement
-    float temperatureF = sensors.getTempFByIndex(0);
-    Serial.println("Temperature: " + String(temperatureF) + "°F");
+    currentTemperatureF = sensors.getTempFByIndex(0);
+    Serial.println("Temperature: " + String(currentTemperatureF) + "°F  ->  Target: " + String(targetTemperatureF) + "°F");
   }
 
   // Allow a client to connect
@@ -128,6 +129,18 @@ void handleHttpResponse(WiFiClient& client, String& request) {
     if (ledOn) digitalWrite(LED_BUILTIN, HIGH);
     if (ledOff) digitalWrite(LED_BUILTIN, LOW);
 
+    // // Check for /setTemp endpoint
+    // int tempIndex = request.indexOf("GET /setTemp?value=");
+    // if (tempIndex >= 0) {
+    //     int valueStart = tempIndex + 18; // Length of "GET /setTemp?value="
+    //     int valueEnd = request.indexOf(' ', valueStart);
+    //     if (valueEnd > valueStart) {
+    //         String valueStr = request.substring(valueStart, valueEnd);
+    //         tempTarget = valueStr.toFloat();
+    //         Serial.println("New tempTarget: " + String(tempTarget));
+    //     }
+    // }
+
     String htmlResponse =
         "HTTP/1.1 200 OK\r\n"
         "Content-type: text/html\r\n"
@@ -148,6 +161,14 @@ void handleHttpResponse(WiFiClient& client, String& request) {
         "    <p>LED is " + String(ledOn ? "ON" : "OFF") + "</p>\n"
         "    <a href=\"/H\">Turn LED ON</a>\n"
         "    <a href=\"/L\">Turn LED OFF</a>\n"
+        "    <p>Current->Target</p>\n"
+        "    <p>" + String(currentTemperatureF) + "°F --> " + String(targetTemperatureF) + "°F</p>\n"
+        // "    <p>Current Temp Target: " + String(tempTarget) + "°F</p>\n"
+        // "    <form action=\"/setTemp\" method=\"get\">\n"
+        // "        <label for=\"value\">Set Temp Target:</label>\n"
+        // "        <input type=\"text\" id=\"value\" name=\"value\">\n"
+        // "        <input type=\"submit\" value=\"Set\">\n"
+        // "    </form>\n"
         "</body>\n"
         "</html>\n";
 
