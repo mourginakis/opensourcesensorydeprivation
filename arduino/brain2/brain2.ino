@@ -114,6 +114,7 @@ String readHttpRequest(WiFiClient& client) {
         while (client.available()) {
             char c = client.read();
             request += c;
+            // TODO: do we need both of these two lines below?
             timeout = millis() + 1000;  // Reset timeout on new data
             if (request.endsWith("\r\n\r\n")) break;  // End of HTTP headers
         }
@@ -130,6 +131,7 @@ void handleHttpResponse(WiFiClient& client, String& request) {
     if (ledOff) digitalWrite(LED_BUILTIN, LOW);
 
     // Check for /setTemp endpoint
+    // TODO: clean this up! Do we need to check for \r?
     int tempIndex = request.indexOf("GET /setTemp?value=");
     if (tempIndex >= 0) {
         int valueStart = tempIndex + 19; // Correct length of "GET /setTemp?value="
