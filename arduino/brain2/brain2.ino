@@ -22,6 +22,18 @@ int status = WL_IDLE_STATUS;
 WiFiServer server(80);
 
 
+
+// Data wire of DS18B20 Temperature Sensor (digital pin 2)
+// #define ONE_WIRE_BUS 2
+
+// Create a OneWire instance to communicate with any OneWire device
+// OneWire oneWire(ONE_WIRE_BUS);
+
+// Pass the oneWire reference to Dallas Temperature.
+// DallasTemperature sensors(&oneWire);
+
+
+
 void setup() {
   Serial.begin(9600);
 
@@ -48,87 +60,84 @@ void setup() {
     delay(10000);
   }
   server.begin();
-  // you're connected now, so print out the status:
   printWifiStatus();
 
 }
 
 
 void loop() {
-  WiFiClient client = server.available();   // listen for incoming clients
 
-  if (client) {                             // if you get a client,
-    Serial.println("new client");           // print a message out the serial port
-    String currentLine = "";                // make a String to hold incoming data from the client
-    while (client.connected()) {            // loop while the client's connected
-      if (client.available()) {             // if there's bytes to read from the client,
-        char c = client.read();             // read a byte, then
-        Serial.write(c);                    // print it out to the serial monitor
-        if (c == '\n') {                    // if the byte is a newline character
+  // Allow a client to connect
+  WiFiClient client = server.available();
+  if (!client) return;
 
-          // if the current line is blank, you got two newline characters in a row.
-          // that's the end of the client HTTP request, so send a response:
-          if (currentLine.length() == 0) {
-            // HTTP headers always start with a response code (e.g. HTTP/1.1 200 OK)
-            // and a content-type so the client knows what's coming, then a blank line:
-            client.println("HTTP/1.1 200 OK");
-            client.println("Content-type:text/html");
-            client.println();
-
-            // the content of the HTTP response follows the header:
-            client.print("<p style=\"font-size:7vw;\">Click <a href=\"/H\">here</a> turn the LED on<br></p>");
-            client.print("<p style=\"font-size:7vw;\">Click <a href=\"/L\">here</a> turn the LED off<br></p>");
-            
-            // The HTTP response ends with another blank line:
-            client.println();
-            // break out of the while loop:
-            break;
-          } else {    // if you got a newline, then clear currentLine:
-            currentLine = "";
-          }
-        } else if (c != '\r') {  // if you got anything else but a carriage return character,
-          currentLine += c;      // add it to the end of the currentLine
-        }
-
-        // Check to see if the client request was "GET /H" or "GET /L":
-        if (currentLine.endsWith("GET /H")) {
-          digitalWrite(LED_BUILTIN, HIGH);               // GET /H turns the LED on
-        }
-        if (currentLine.endsWith("GET /L")) {
-          digitalWrite(LED_BUILTIN, LOW);                // GET /L turns the LED off
-        }
-      }
-      
-    }
-    // close the connection:
+  Serial.println("new client");
+  
+  // Get the client request and read into memory
+  String request = readHttpRequest(client);
+  if (request.length() == 0) {
     client.stop();
-    Serial.println("client disconnected");
+    Serial.println("Client disconnected (empty request).");
+    return;
   }
+
+  Serial.println("Client Request:\n" + request);
+
+
+  handleRequest(client, request);
+
+  client.stop();
+  Serial.println("Client disconnected.");
 }
 
 
+// Reads the full HTTP request into a string
+String readHttpRequest(WiFiClient& client) {
+    String request = "";
+    unsigned long timeout = millis() + 1000;  // Timeout after 1 second
 
-// Data wire of DS18B20 Temperature Sensor (digital pin 2)
-// #define ONE_WIRE_BUS 2
+    while (client.connected() && millis() < timeout) {
+        while (client.available()) {
+            char c = client.read();
+            request += c;
+            timeout = millis() + 1000;  // Reset timeout on new data
+            if (request.endsWith("\r\n\r\n")) break;  // End of HTTP headers
+        }
+    }
+    return request;
+}
 
-// Create a OneWire instance to communicate with any OneWire device
-// OneWire oneWire(ONE_WIRE_BUS);
 
-// Pass the oneWire reference to Dallas Temperature.
-// DallasTemperature sensors(&oneWire);
+// Processes HTTP requests
+void handleRequest(WiFiClient& client, String& request) {
+    String response = "HTTP/1.1 200 OK\r\nContent-type:text/html\r\n\r\n";
+
+    if (request.indexOf("GET /H") >= 0) {
+        digitalWrite(LED_BUILTIN, HIGH);
+        response += "<p style=\"font-size:7vw;\">LED is <b>ON</b></p>";
+    } else if (request.indexOf("GET /L") >= 0) {
+        digitalWrite(LED_BUILTIN, LOW);
+        response += "<p style=\"font-size:7vw;\">LED is <b>OFF</b></p>";
+    } else {
+        response += "<p style=\"font-size:7vw;\">Invalid Request</p>";
+    }
+
+    response += "<p style=\"font-size:7vw;\"><a href=\"/H\">Turn LED ON</a></p>";
+    response += "<p style=\"font-size:7vw;\"><a href=\"/L\">Turn LED OFF</a></p>";
+
+    client.print(response);
+}
 
 
+// Prints WiFi SSID, IP address, and signal strength
 void printWifiStatus() {
-  // print the SSID of the network you're attached to:
   Serial.print("SSID: ");
   Serial.println(WiFi.SSID());
 
-  // print your board's IP address:
   IPAddress ip = WiFi.localIP();
   Serial.print("IP Address: ");
   Serial.println(ip);
 
-  // print the received signal strength:
   long rssi = WiFi.RSSI();
   Serial.print("signal strength (RSSI):");
   Serial.print(rssi);
