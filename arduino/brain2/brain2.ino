@@ -43,12 +43,15 @@ unsigned long lastTempCheck = 0;  // Store the last time temperature was checked
 const unsigned long tempCheckInterval = 10000;  // Interval to check temperature (10 seconds)
 float targetTemperatureF = 93.5;
 
+const int ssrPin = 8;  // Pin 8 = SSR, other pin connected to GND
+
 
 void setup() {
   Serial.begin(9600);
   sensors.begin();          // Start the DS18B20 sensor
   Serial.println("DS18B20 Temperature Sensor Ready");
-  matrix.begin(); 
+  matrix.begin();
+  pinMode(ssrPin, OUTPUT);
 
   // check for the WiFi module:
   if (WiFi.status() == WL_NO_MODULE) {
@@ -92,6 +95,11 @@ void loop() {
     Serial.println("Temperature: " + String(myAverage) + "°F  ->  Target: " + String(targetTemperatureF) + "°F");
     Serial.println("Buffer Size: " + String(temperatureBufferF.size()));
   }
+
+  // Turn on heaters if the average temperature is below the target
+  float myAverageTemp = averageValue(temperatureBufferF);
+  digitalWrite(ssrPin, myAverageTemp < targetTemperatureF ? HIGH : LOW);
+  digitalWrite(LED_BUILTIN, myAverageTemp < targetTemperatureF ? HIGH : LOW);
 
   // Allow a client to connect
   WiFiClient client = server.available();
