@@ -163,6 +163,7 @@ void handleHttpResponse(WiFiClient& client, String& request) {
         "    <a href=\"/L\">Turn LED OFF</a>\n"
         "    <p>Current->Target</p>\n"
         "    <p>" + String(currentTemperatureF) + "°F --> " + String(targetTemperatureF) + "°F</p>\n"
+        "    <p>Last Temp Check: " + String(lastTempCheck) + "</p>\n"
         // "    <p>Current Temp Target: " + String(tempTarget) + "°F</p>\n"
         // "    <form action=\"/setTemp\" method=\"get\">\n"
         // "        <label for=\"value\">Set Temp Target:</label>\n"
