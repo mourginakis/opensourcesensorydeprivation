@@ -34,6 +34,8 @@ DallasTemperature sensors(&oneWire);
 
 unsigned long lastTempCheck = 0;  // Store the last time temperature was checked
 const unsigned long tempCheckInterval = 10000;  // Interval to check temperature (10 seconds)
+float tempTarget = 93.5;
+
 
 void setup() {
   Serial.begin(9600);
