@@ -8,7 +8,8 @@ You can edit this in VSCode with AI and use the arduino IDE to upload it
 to the board. The IDE will live update the file.
 
 */
-
+#include <OneWire.h>
+#include <DallasTemperature.h>
 #include "WiFiS3.h"
 
 #include "arduino_secrets.h"
@@ -24,18 +25,20 @@ WiFiServer server(80);
 
 
 // Data wire of DS18B20 Temperature Sensor (digital pin 2)
-// #define ONE_WIRE_BUS 2
+#define ONE_WIRE_BUS 2
 
 // Create a OneWire instance to communicate with any OneWire device
-// OneWire oneWire(ONE_WIRE_BUS);
+OneWire oneWire(ONE_WIRE_BUS);
+// Pass the reference to Dallas Temperature.
+DallasTemperature sensors(&oneWire);
 
-// Pass the oneWire reference to Dallas Temperature.
-// DallasTemperature sensors(&oneWire);
 
 
 
 void setup() {
   Serial.begin(9600);
+  sensors.begin();          // Start the DS18B20 sensor
+  Serial.println("DS18B20 Temperature Sensor Ready");
 
   // check for the WiFi module:
   if (WiFi.status() == WL_NO_MODULE) {
@@ -67,6 +70,10 @@ void setup() {
 
 void loop() {
 
+  sensors.requestTemperatures(); // Request temperature measurement
+  float temperatureF = sensors.getTempFByIndex(0);
+  Serial.println("Temperature: " + String(temperatureF) + "°F");
+
   // Allow a client to connect
   WiFiClient client = server.available();
   if (!client) return;
@@ -82,7 +89,6 @@ void loop() {
   }
 
   Serial.println("Client Request:\n" + request);
-
 
   sendHttpResponse(client, request);
 
