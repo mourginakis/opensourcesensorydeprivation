@@ -172,12 +172,11 @@ void handleHttpResponse(WiFiClient& client, String& request) {
         "    <p>Current->Target</p>\n"
         "    <p>" + String(currentTemperatureF) + "°F --> " + String(targetTemperatureF) + "°F</p>\n"
         "    <p>Last Temp Check: " + String(lastTempCheck) + "</p>\n"
-        // "    <p>Current Temp Target: " + String(tempTarget) + "°F</p>\n"
-        // "    <form action=\"/setTemp\" method=\"get\">\n"
-        // "        <label for=\"value\">Set Temp Target:</label>\n"
-        // "        <input type=\"text\" id=\"value\" name=\"value\">\n"
-        // "        <input type=\"submit\" value=\"Set\">\n"
-        // "    </form>\n"
+        "    <form action=\"/setTemp\" method=\"get\">\n"
+        "        <label for=\"value\">Set Temp Target:</label>\n"
+        "        <input type=\"text\" id=\"value\" name=\"value\">\n"
+        "        <input type=\"submit\" value=\"Set\">\n"
+        "    </form>\n"
         "</body>\n"
         "</html>\n";
 
