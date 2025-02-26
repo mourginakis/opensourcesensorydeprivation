@@ -7,7 +7,13 @@ https://docs.arduino.cc/tutorials/uno-r4-wifi/wifi-examples#simple-webserver
 You can edit this in VSCode with AI and use the arduino IDE to upload it 
 to the board. The IDE will live update the file.
 
+
+We use the SCD-41 sensor to measure CO2, temperature, and humidity.
+https://learn.adafruit.com/adafruit-scd-40-and-scd-41/arduino
+
+
 */
+
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include <CircularBuffer.hpp>
@@ -37,6 +43,7 @@ ArduinoLEDMatrix matrix;
 // We use circular buffers to keep track of data moving averages.
 CircularBuffer <float, 10> temperatureBufferF;             // Water Temperature
 // CircularBuffer <float, 10> humidityBuffer;              // Humidity
+// CircularBuffer <float, 10> co2Buffer;                   // CO2
 
 
 unsigned long lastTempCheck = 0;  // Store the last time temperature was checked
